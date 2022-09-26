@@ -1,0 +1,33 @@
+---
+title: "Build_TM_from_scratch"
+author: "Gary Hutson"
+date: '2022-09-26'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Bring in imports
+
+
+```{r cars}
+library(MLDataR)
+library(tidymodels)
+library(dplyr)
+library(ggplot2)
+library(stacks)
+library(skimr)
+
+```
+
+## Load in the dataaset
+
+The dataset for our example will be the Thyroid dataset contained in the `MLDataR` package.
+
+```{r dataset_include}
+td <- MLDataR::thyroid_disease
+skim(td)
+```
+
