@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Bring in imports
 
 
-```{r cars}
+```{r packages, echo=FALSE}
 library(MLDataR)
 library(tidymodels)
 library(dplyr)
@@ -22,7 +22,7 @@ library(skimr)
 
 ```
 
-## Load in the dataaset
+## Load in the dataaset and view statistics
 
 The dataset for our example will be the Thyroid dataset contained in the `MLDataR` package.
 
@@ -30,4 +30,41 @@ The dataset for our example will be the Thyroid dataset contained in the `MLData
 td <- MLDataR::thyroid_disease
 skim(td)
 ```
+
+# Clean imports
+
+We will remove our null values for now, but you could impute these with methods such as MICE or mean/mode/median imputation methods, see:.
+
+```{r clean_data}
+td_clean <- td[complete.cases(td),]
+dim(td_clean)
+```
+
+# View class distribution
+
+Next we will view the class distribution of our classification task:
+
+```{r class_disp}
+table_class <- table(td_clean$ThryroidClass)
+prop.table(table_class)
+
+```
+
+We will do some over sampling on the sick cases later on in this tutorial, however this level of imbalance will lead to skewed ML models in terms of predicting most patients not to have a thyroid issue. 
+
+
+# EDA
+
+We will create a function to look at the 
+
+
+
+## Dividing our data into train/val/test samples
+
+Now we will divide our data into training, validation and test samples:
+
+```{r divide_and_conquer}
+
+```
+
 
