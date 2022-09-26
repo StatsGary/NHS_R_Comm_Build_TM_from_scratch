@@ -1,4 +1,5 @@
 # NHS R Community - Build a TidyModels Classification Model from Scratch
+<p><a href="https://hutsons-hacks.info/"><img src = "man/fig/NHSR.png" width = "125px" height = "150px" align="right"></a></p>
 In this workshop you will learn how to:
 - Load in data from the MLDataR library
 - Explaratory data analysis
