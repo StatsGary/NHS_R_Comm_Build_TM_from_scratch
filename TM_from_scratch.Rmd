@@ -68,6 +68,10 @@ print(class_imbalance_original)
 
 We will do some over sampling on the sick cases later on in this tutorial, however this level of imbalance will lead to skewed ML models in terms of predicting most patients not to have a thyroid issue. 
 
+Smote is the algorithm we will use for dealing with imbalance:
+
+![SMOTE]()
+
 
 # Explaratory Data Analysis (EDA)
 <!--https://www.kaggle.com/code/statsgary/thyroid-disease-eda-classification-and-ensembling/edit-->
