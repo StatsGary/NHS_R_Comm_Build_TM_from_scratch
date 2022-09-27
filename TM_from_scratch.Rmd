@@ -1,12 +1,11 @@
 ---
 title: "Building a TidyModel for Classification from scratch"
 author: "Gary Hutson - Head of Machine Learning"
-date: "15/12/2021"
 
 output:
   html_document:
-    theme: lumen
-    highlight: tango
+    theme: paper
+    highlight: textmate
     toc: true
     number_sections: true
     toc_float:
@@ -38,7 +37,7 @@ The following steps will show you the steps to prepare the data.
 
 ## Load in the dataaset and view statistics
 
-The dataset for our example will be the Thyroid dataset contained in the `MLDataR` package.
+The dataset for the example will be the Thyroid dataset contained in the `MLDataR` package.
 
 ```{r dataset_include}
 td <- MLDataR::thyroid_disease
@@ -49,7 +48,7 @@ skim(td)
 
 ## Clean imports
 
-We will remove our null values for now, but you could impute these with methods such as MICE or mean/mode/median imputation methods, see:.
+We will remove the null values for now, but you could impute these with methods such as MICE or mean/mode/median imputation methods, see:.
 
 ```{r clean_data}
 td_clean <- td[complete.cases(td),]
@@ -58,7 +57,7 @@ dim(td_clean)
 
 ## View class distribution
 
-Next we will view the class distribution of our classification task:
+Next we will view the class distribution of the classification task:
 
 ```{r class_disp}
 table_class <- table(td_clean$ThryroidClass)
@@ -70,7 +69,7 @@ We will do some over sampling on the sick cases later on in this tutorial, howev
 
 Smote is the algorithm we will use for dealing with imbalance:
 
-![SMOTE]()
+![](man/fig/test_smote.png)
 
 
 # Explaratory Data Analysis (EDA)
@@ -102,15 +101,15 @@ plot + ggthemes::theme_solarized() + theme(legend.position = 'none') +
 
 ```
 
-As you can see - we have a number of outliers in our continuous variables. To deal with this we will apply a standardisation method to bring that variability on to a similar scale by mean centering, or another technique, to reduce the affects of the statistical outliers. Other treatment options could be to expunge these from your analysis via anomaly / outlier detection techniques. 
+As you can see - we have a number of outliers in the continuous variables. To deal with this we will apply a standardisation method to bring that variability on to a similar scale by mean centering, or another technique, to reduce the affects of the statistical outliers. Other treatment options could be to expunge these from the analysis via anomaly / outlier detection techniques. 
 
 # Model preparation
 
-The next set of steps will be used to get the data ready for the training of our models - we will have a baseline model and compare against a model known for tearing the tabular data challenges on Kaggle. 
+The next set of steps will be used to get the data ready for the training of the models - we will have a baseline model and compare against a model known for tearing the tabular data challenges on Kaggle. 
 
-## Dividing our data into train/val/test samples
+## Dividing the data into train/val/test samples
 
-Now we will divide our data into training, validation and test samples:
+Now we will divide the data into training, validation and test samples:
 
 ```{r divide_and_conquer}
 td_clean <- td_clean %>% 
@@ -129,11 +128,11 @@ test <- rsample::testing(td_split)
 
 ```
 
-Okay, we have our training and testing sample. This sample will be used to assess how accurate the model is on the held out testing set. This will link to the evaluate metrics for the model. We will delve into that later on in this training.
+Okay, we have the training and testing sample. This sample will be used to assess how accurate the model is on the held out testing set. This will link to the evaluate metrics for the model. We will delve into that later on in this training.
 
-## Making our first recipe
+## Making the first recipe
 
-Recipes are a way to simplify the feature engineering process. Back in the old days you had to do each of these steps to your training data prior to fitting a model, especially using package such as `caret`. Now, you can speed this process up massively with the help of the recipes package. Let's whip up our first recipe:
+Recipes are a way to simplify the feature engineering process. Back in the old days you had to do each of these steps to the training data prior to fitting a model, especially using package such as `caret`. Now, you can speed this process up massively with the help of the recipes package. Let's whip up the first recipe:
 
 ```{r training_recipe}
 
@@ -157,7 +156,7 @@ class_imbalance_after_smote <- unclass(prop.table(table(training_df$ThryroidClas
 
 ```
 
-As we applied Synthetic Minority Oversampling - which is a nearest neighbours method of oversampling we need to check what has happened to our binary labels (negative or sick):
+As we applied Synthetic Minority Oversampling - which is a nearest neighbours method of oversampling we need to check what has happened to the binary labels (negative or sick):
 
 ```{r class_imbalance}
 imbalance_frame <- tibble(class_imbalance_original,
@@ -171,3 +170,162 @@ This technique is not always successful, due to the severity of the imbalance, t
 - 
 - 
 
+# Model training 
+
+In this example I will create a baseline model and compare against one further classifier, for the sake of brevity. However, in ML challenges it is common to try many different classifiers and pit them against each other in the evaluation stages. 
+
+
+## Training the Logistic Regression baseline model
+
+The theory is that if a simple linear classifier does a better job than a more complex algorithm, then stick with good old logistic regression. I won't cover the mathematics of logistic regression, but it follows very closely to a linear regression equation, with the addition that there is a log link function used to turn it from a regressor into a classifier.
+
+### Initialising the model
+
+Here I use [Parsnip](https://parsnip.tidymodels.org/) to search for the list of [available models](https://www.tidymodels.org/find/parsnip/):
+
+```{r logistic_reg}
+lr_mod <- parsnip::logistic_reg() %>% 
+  set_engine('glm')
+
+print(lr_mod)
+
+```
+
+### Creating the model workflow
+
+We will use workflows to create the model workflow:
+
+```{r workflows}
+lr_wf <-
+  workflow() %>% 
+  add_model(lr_mod) %>% 
+  add_recipe(train_rcp)
+```
+
+These are easy to explain:
+
+1. I create a workflow for the model 
+2. I add the model that I have initialised in the preceeding step
+3. I add the recipe previously created
+
+Next, I will kick off the training process:
+
+```{r train_baseline}
+lr_fit <- 
+  lr_wf %>% 
+  fit(data=train)
+
+```
+
+### Extracting the fitted data
+
+I want to pull the data fits into a tibble I can explore. This can be done below:
+
+```{r pull_fit}
+lr_fitted <- lr_fit %>% 
+  extract_fit_parsnip() %>% 
+  tidy()
+
+```
+
+I will visualise this via a bar chart to observe my significant features: 
+```{r viz_log_reg}
+
+lr_fitted_add <- lr_fitted  %>% 
+  mutate(Significance = ifelse(p.value < 0.05, 
+                               "Significant", "Insignificant")) %>% 
+  arrange(desc(p.value)) 
+#Create a ggplot object to visualise significance
+plot <- lr_fitted_add %>% 
+  ggplot(mapping = aes(x=term, y=p.value, fill=Significance)) +
+  geom_col() + theme(axis.text.x = element_text(
+                                        face="bold", color="#0070BA", 
+                                        size=8, angle=90)
+                                                ) + labs(y="P value", x="Terms", 
+                                                         title="P value significance chart",
+                                                         subtitle="A chart to represent the significant variables in the model",
+                                                         caption="Produced by Gary Hutson")
+
+plotly::ggplotly(plot) 
+
+
+```
+
+## Training a tree based boosting model (XGBoost)
+
+There are many ways to improve model performance, but the three main ways are:
+
+1. Boosting
+2. Bagging 
+3. Stacking 
+
+There are specific R packages for two of these - for bagging see baguette and for stacking see stacks.
+
+### Set up model
+
+Firstly, we are going to repeat the same process as above and then we are going to compare the results that we get from both models to make a decision about which one to push into production. 
+
+This time I will hyperparameter tune the number of trees to grow and the depth of the leafs of the tree. For details of the maths underpinning this model, check out Josh Stamar's excellent videos: https://www.youtube.com/watch?v=ZVFeW798-2I.
+
+```{r setup_xgboost}
+
+xgboost_mod <- boost_tree(trees=tune(), tree_depth = tune()) %>% 
+  set_mode('classification') %>% 
+  set_engine('xgboost')
+
+```
+
+### Hyperparameter tuning and K-Fold Cross Validation
+
+Here, as stated, I will do an iterative search for the best parameters to pass to my model:
+
+```{r hp_search}
+
+# Set the selected parameters in the grid
+boost_grid <- dials::grid_regular(
+  trees(), tree_depth(), levels=5 #Number of combinations to try
+  
+)
+
+# Create the resampling method i.e. K Fold Cross Validation
+folds <- vfold_cv(train, k=10)
+
+```
+
+
+## Create XGBoost workflow
+
+I will now implement the workflow to manage the XGBoost model:
+
+```{r xgboost_wf}
+xgboost_wf <- workflow() %>%
+  add_model(xgboost_mod) %>% 
+  add_recipe(train_rcp)
+```
+
+Once I have this I can then go about iterating through the best combinations of fold and hyperparameter: 
+
+```{r training_model, echo=FALSE}
+xgboost_fold <- xgboost_wf %>% 
+  tune_grid(resamples = folds, grid=boost_grid)
+
+```
+```{r grab_the_best_mod}
+best_model <- xgboost_fold %>% 
+  select_best('roc_auc')
+```
+
+Visualising the results: 
+
+```{r viz_hp}
+xgboost_fold %>% 
+  collect_metrics() %>% 
+  mutate(tree_depth = factor(tree_depth)) %>% 
+  ggplot(aes(trees, mean, color = tree_depth)) +
+  geom_line(size=1.5, alpha=0.6) +
+  geom_point(size=2) +
+  facet_wrap(~ .metric, scales='free', nrow=2) +
+  scale_x_log10(labels = scales::label_number()) +
+  scale_color_viridis_d(option='plasma', begin=.9, end =0)
+```
+### Finalise the workflow
