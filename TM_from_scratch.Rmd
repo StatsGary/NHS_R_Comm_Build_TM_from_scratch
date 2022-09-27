@@ -18,10 +18,8 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Bring in imports
 
-
-```{r packages, echo=FALSE}
+```{r packages, echo=TRUE, include=FALSE}
 library(MLDataR)
 library(tidymodels)
 library(dplyr)
@@ -30,8 +28,13 @@ library(stacks)
 library(skimr)
 library(purrr)
 library(ggthemes)
+library(modeldata)
 
 ```
+
+# Data preparation 
+
+The following steps will show you the steps to prepare the data.
 
 ## Load in the dataaset and view statistics
 
@@ -44,7 +47,7 @@ td <- td %>%
 skim(td)
 ```
 
-# Clean imports
+## Clean imports
 
 We will remove our null values for now, but you could impute these with methods such as MICE or mean/mode/median imputation methods, see:.
 
@@ -53,20 +56,20 @@ td_clean <- td[complete.cases(td),]
 dim(td_clean)
 ```
 
-# View class distribution
+## View class distribution
 
 Next we will view the class distribution of our classification task:
 
 ```{r class_disp}
 table_class <- table(td_clean$ThryroidClass)
-prop.table(table_class)
-
+class_imbalance_original <- unclass(prop.table(table_class))[1:2]
+print(class_imbalance_original)
 ```
 
 We will do some over sampling on the sick cases later on in this tutorial, however this level of imbalance will lead to skewed ML models in terms of predicting most patients not to have a thyroid issue. 
 
 
-# EDA
+# Explaratory Data Analysis (EDA)
 <!--https://www.kaggle.com/code/statsgary/thyroid-disease-eda-classification-and-ensembling/edit-->
 
 We will create a function to look at the distribution of the data:
@@ -94,8 +97,12 @@ plot + ggthemes::theme_solarized() + theme(legend.position = 'none') +
 
 
 ```
+
 As you can see - we have a number of outliers in our continuous variables. To deal with this we will apply a standardisation method to bring that variability on to a similar scale by mean centering, or another technique, to reduce the affects of the statistical outliers. Other treatment options could be to expunge these from your analysis via anomaly / outlier detection techniques. 
 
+# Model preparation
+
+The next set of steps will be used to get the data ready for the training of our models - we will have a baseline model and compare against a model known for tearing the tabular data challenges on Kaggle. 
 
 ## Dividing our data into train/val/test samples
 
@@ -103,7 +110,9 @@ Now we will divide our data into training, validation and test samples:
 
 ```{r divide_and_conquer}
 td_clean <- td_clean %>% 
-  dplyr::mutate(ThryroidClass = as.factor(ThryroidClass))
+  dplyr::mutate(ThryroidClass = as.factor(ThryroidClass)) %>% 
+  #dplyr::select(-ref_src) %>% 
+  drop_na()
 
 # Split the dataset 
 td_split <- rsample::initial_split(td_clean, 
@@ -118,4 +127,43 @@ test <- rsample::testing(td_split)
 
 Okay, we have our training and testing sample. This sample will be used to assess how accurate the model is on the held out testing set. This will link to the evaluate metrics for the model. We will delve into that later on in this training.
 
+## Making our first recipe
+
+Recipes are a way to simplify the feature engineering process. Back in the old days you had to do each of these steps to your training data prior to fitting a model, especially using package such as `caret`. Now, you can speed this process up massively with the help of the recipes package. Let's whip up our first recipe:
+
+```{r training_recipe}
+
+train_rcp <- recipes::recipe(ThryroidClass ~ ., data=train) %>% 
+  step_dummy(ref_src, role='predictor') %>% 
+  # Upsample data
+  themis::step_smote(ThryroidClass, over_ratio = 0.97, neighbors = 3) %>%
+  step_zv(all_predictors()) %>% 
+  step_normalize(all_numeric_predictors())  
+ # Remove predictors that have little effect on target
+
+
+# Prep and bake the recipe so we can view this as a seperate data frame
+training_df <- train_rcp %>% 
+  prep() %>% 
+  juice()
+
+# Class imbalance resolved
+class_imbalance_after_smote <- unclass(prop.table(table(training_df$ThryroidClass)))[1:2]
+
+
+```
+
+As we applied Synthetic Minority Oversampling - which is a nearest neighbours method of oversampling we need to check what has happened to our binary labels (negative or sick):
+
+```{r class_imbalance}
+imbalance_frame <- tibble(class_imbalance_original,
+           class_imbalance_after_smote)
+
+print(imbalance_frame)
+
+```
+This technique is not always successful, due to the severity of the imbalance, the representation of the sick class might make the overall distribution imbalanced. There are many methods to deal with imbalance - here are a few papers:
+
+- 
+- 
 
