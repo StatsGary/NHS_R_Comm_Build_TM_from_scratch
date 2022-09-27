@@ -1,8 +1,17 @@
 ---
-title: "Build_TM_from_scratch"
-author: "Gary Hutson"
-date: '2022-09-26'
-output: html_document
+title: "Building a TidyModel for Classification from scratch"
+author: "Gary Hutson - Head of Machine Learning"
+date: "15/12/2021"
+
+output:
+  html_document:
+    theme: lumen
+    highlight: tango
+    toc: true
+    number_sections: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
 ---
 
 ```{r setup, include=FALSE}
@@ -19,6 +28,8 @@ library(dplyr)
 library(ggplot2)
 library(stacks)
 library(skimr)
+library(purrr)
+library(ggthemes)
 
 ```
 
@@ -28,6 +39,8 @@ The dataset for our example will be the Thyroid dataset contained in the `MLData
 
 ```{r dataset_include}
 td <- MLDataR::thyroid_disease
+td <- td %>% 
+  dplyr::filter(patient_age <400)
 skim(td)
 ```
 
@@ -54,9 +67,34 @@ We will do some over sampling on the sick cases later on in this tutorial, howev
 
 
 # EDA
+<!--https://www.kaggle.com/code/statsgary/thyroid-disease-eda-classification-and-ensembling/edit-->
 
-We will create a function to look at the 
+We will create a function to look at the distribution of the data:
 
+```{r distribution_function}
+# Get continuous variables only
+subset <- td_clean %>% 
+  dplyr::select(ThryroidClass, patient_age, TSH_reading, T3_reading,
+                T4_reading, thyrox_util_rate_T4U_reading,
+                FTI_reading)
+
+
+# Bring in external file for visualisations
+source('functions/visualisations.R')
+
+# Use plot function
+plot <- histoplotter(subset, ThryroidClass, 
+                     chart_x_axis_lbl = 'Thyroid Class', 
+                     chart_y_axis_lbl = 'Measures',boxplot_color = 'navy', 
+                     boxplot_fill = '#89CFF0', box_fill_transparency = 0.2) 
+
+# Add extras to plot
+plot + ggthemes::theme_solarized() + theme(legend.position = 'none') + 
+  scale_color_manual(values=c('negative' = 'red', 'positive' = 'blue'))
+
+
+```
+As you can see - we have a number of outliers in our continuous variables. To deal with this we will apply a standardisation method to bring that variability on to a similar scale by mean centering, or another technique, to reduce the affects of the statistical outliers. Other treatment options could be to expunge these from your analysis via anomaly / outlier detection techniques. 
 
 
 ## Dividing our data into train/val/test samples
@@ -64,7 +102,20 @@ We will create a function to look at the
 Now we will divide our data into training, validation and test samples:
 
 ```{r divide_and_conquer}
+td_clean <- td_clean %>% 
+  dplyr::mutate(ThryroidClass = as.factor(ThryroidClass))
+
+# Split the dataset 
+td_split <- rsample::initial_split(td_clean, 
+                                   strata = ThryroidClass, 
+                                   prop=0.9,
+                                   breaks = 4)
+
+train <- rsample::training(td_split)
+test <- rsample::testing(td_split)
 
 ```
+
+Okay, we have our training and testing sample. This sample will be used to assess how accurate the model is on the held out testing set. This will link to the evaluate metrics for the model. We will delve into that later on in this training.
 
 
