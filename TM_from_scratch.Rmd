@@ -118,13 +118,13 @@ td_clean <- td_clean %>%
   drop_na()
 
 # Split the dataset 
-td_split <- rsample::initial_split(td_clean, 
+td_split <-initial_split(td_clean, 
                                    strata = ThryroidClass, 
                                    prop=0.9,
                                    breaks = 4)
 
-train <- rsample::training(td_split)
-test <- rsample::testing(td_split)
+train <- training(td_split)
+test <- testing(td_split)
 
 ```
 
@@ -165,10 +165,7 @@ imbalance_frame <- tibble(class_imbalance_original,
 print(imbalance_frame)
 
 ```
-This technique is not always successful, due to the severity of the imbalance, the representation of the sick class might make the overall distribution imbalanced. There are many methods to deal with imbalance - here are a few papers:
-
-- 
-- 
+This technique is not always successful, due to the severity of the imbalance, the representation of the sick class might make the overall distribution imbalanced. 
 
 # Model training 
 
@@ -280,15 +277,12 @@ xgboost_mod <- boost_tree(trees=tune(), tree_depth = tune()) %>%
 Here, as stated, I will do an iterative search for the best parameters to pass to my model:
 
 ```{r hp_search}
-
 # Set the selected parameters in the grid
 boost_grid <- dials::grid_regular(
   trees(), tree_depth(), levels=5 #Number of combinations to try
-  
 )
-
 # Create the resampling method i.e. K Fold Cross Validation
-folds <- vfold_cv(train, k=10)
+folds <- vfold_cv(train, k=5)
 
 ```
 
@@ -309,10 +303,12 @@ Once I have this I can then go about iterating through the best combinations of 
 xgboost_fold <- xgboost_wf %>% 
   tune_grid(resamples = folds, grid=boost_grid)
 
+head(collect_metrics(xgboost_fold))
+
 ```
 ```{r grab_the_best_mod}
 best_model <- xgboost_fold %>% 
-  select_best('roc_auc')
+  select_best('accuracy')
 ```
 
 Visualising the results: 
@@ -326,6 +322,66 @@ xgboost_fold %>%
   geom_point(size=2) +
   facet_wrap(~ .metric, scales='free', nrow=2) +
   scale_x_log10(labels = scales::label_number()) +
-  scale_color_viridis_d(option='plasma', begin=.9, end =0)
+  scale_color_viridis_d(option='plasma', begin=.9, end =0) + theme_minimal()
 ```
-### Finalise the workflow
+### Finalise the workflow and fit best model
+
+I will now finalise my workflow by slecting the best hyperparameters for the job:
+
+```{r get_best_model_and_hp}
+final_wf <- 
+  xgboost_wf %>% 
+  finalize_workflow(best_model)
+
+print(final_wf)
+
+# Final fit of our fold and hyperparameter combination
+
+final_xgboost_fit <- 
+  final_wf %>% 
+  last_fit(td_split)
+
+```
+
+### Collect metrics for evaluation 
+
+The final step would be to collect the metrics for evaluation. We will dedicate a seperate section to the evaluation of our models:
+
+```{r collected_metrics}
+final_xgboost_fit %>% 
+  collect_metrics()
+
+```
+
+Next we will look at the workflow fit:
+
+```{r workflow_fit}
+workflow_xgboost_fit <- final_xgboost_fit %>% 
+  extract_workflow()
+```
+## Model evaluation
+
+As we are following on from the xgboost model building, we will evaluate this first and then compare to our baseline model:
+
+### Use fitted model to predict on testing set
+
+The aim here is to check that our `predictions` match up with our `ground truth` labels. 
+
+```{r eval_xgboost}
+# Pass our test data through model
+testing_fit_class <- predict(workflow_xgboost_fit, test)
+testing_fit_probs <- predict(workflow_xgboost_fit, test, type='prob')
+# Bind this on to our test data with the label to compare ground truth vs predicted
+predictions<- cbind(test, testing_fit, testing_fit_probs) %>% 
+  dplyr::mutate(xgboost_model_pred=.pred_class) %>% 
+  dplyr::select(everything(), -.pred_class)
+
+```
+
+
+
+
+
+
+
+
