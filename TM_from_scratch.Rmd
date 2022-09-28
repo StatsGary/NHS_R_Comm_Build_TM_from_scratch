@@ -365,7 +365,7 @@ As we are following on from the xgboost model building, we will evaluate this fi
 
 ### Use fitted model to predict on testing set
 
-The aim here is to check that our `predictions` match up with our `ground truth` labels. 
+The aim here is to check that our `predictions` match up with our `ground truth` labels. The class labels will be determined by probabilities that are higher than 0.5, however we are going to tweak this threshold to only allow a label if the probability is greater than 0.7:
 
 ```{r eval_xgboost}
 # Pass our test data through model
@@ -373,7 +373,7 @@ testing_fit_class <- predict(workflow_xgboost_fit, test)
 testing_fit_probs <- predict(workflow_xgboost_fit, test, type='prob')
 # Bind this on to our test data with the label to compare ground truth vs predicted
 predictions<- cbind(test, testing_fit, testing_fit_probs) %>% 
-  dplyr::mutate(xgboost_model_pred=.pred_class) %>% 
+  dplyr::mutate(xgboost_model_pred=.pred_class, ) %>% 
   dplyr::select(everything(), -.pred_class)
 
 ```
