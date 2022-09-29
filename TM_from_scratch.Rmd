@@ -20,6 +20,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r packages, echo=TRUE, include=FALSE}
 library(MLDataR)
+library(ConfusionTableR)
 library(tidymodels)
 library(dplyr)
 library(ggplot2)
@@ -279,7 +280,7 @@ Here, as stated, I will do an iterative search for the best parameters to pass t
 ```{r hp_search}
 # Set the selected parameters in the grid
 boost_grid <- dials::grid_regular(
-  trees(), tree_depth(), levels=5 #Number of combinations to try
+  trees(), tree_depth(), levels=3 #Number of combinations to try
 )
 # Create the resampling method i.e. K Fold Cross Validation
 folds <- vfold_cv(train, k=5)
@@ -299,7 +300,7 @@ xgboost_wf <- workflow() %>%
 
 Once I have this I can then go about iterating through the best combinations of fold and hyperparameter: 
 
-```{r training_model, echo=FALSE, include=TRUE, results='hide'}
+```{r training_model, echo=FALSE, include=TRUE, results='hide', message=FALSE}
 xgboost_fold <- xgboost_wf %>% 
   tune_grid(resamples = folds, grid=boost_grid)
 
@@ -434,12 +435,49 @@ cm_lr$confusion_matrix
 The baseline model performs pretty well. You can see this is the result of fixing our imbalance. Let's work with it in a row wise fashion, as we can extract some metrics we my be interested in:
 
 ```{r extract_eval_data}
-tibble(
-  Precision=cm_lr$record_level_cm$Precision,
-  Recall=cm_lr$record_level_cm$Recall
+# Get record level confusion matrix for logistic regression model
+cm_rl_log_reg <- cm_lr$record_level_cm
+accuracy_frame <- tibble(
+  Accuracy=cm_rl_log_reg$Accuracy,
+  Kappa=cm_rl_log_reg$Kappa,
+  Precision=cm_rl_log_reg$Precision,
+  Recall=cm_rl_log_reg$Recall
 )
 
 ```
 
+#### Evaluate XGBoost Model 
 
+The next stage is to evaluate the XGBoost baseline. We will use this final evaluation to compare with our baseline model. `Note: in reality this would be compared across many models`:
 
+```{r evaluate_xgboost}
+cm_xgb <- ConfusionTableR::binary_class_cm(
+  #Here you will have to cast to factor type as the tool expects factors
+  train_labels = as.factor(predictions$xgboost_class_custom),
+  truth_labels = as.factor(predictions$ThryroidClass),
+  positive='sick', mode='everything'
+  )
+
+# View the confusion matrix native
+cm_xgb$confusion_matrix
+
+```
+
+I will now extract the predictions and then I will bind the predictions on to the original frame to view what the difference is:
+
+```{r extract_eval_data}
+# Get record level confusion matrix for the XGBoost model
+cm_rl_xgboost <- cm_xgb$record_level_cm
+
+accuracy_frame_xg <- tibble(
+  Accuracy=cm_rl_xgboost$Accuracy,
+  Kappa=cm_rl_xgboost$Kappa,
+  Precision=cm_rl_xgboost$Precision,
+  Recall=cm_rl_xgboost$Recall
+)
+
+# Bind the rows from the previous frame 
+accuracy_frame <- rbind(accuracy_frame, accuracy_frame_xg)
+rm(accuracy_frame_xg)
+
+```
