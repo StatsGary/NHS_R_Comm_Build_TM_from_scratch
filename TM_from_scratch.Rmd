@@ -299,13 +299,16 @@ xgboost_wf <- workflow() %>%
 
 Once I have this I can then go about iterating through the best combinations of fold and hyperparameter: 
 
-```{r training_model, echo=FALSE}
+```{r training_model, echo=FALSE, include=TRUE, results='hide'}
 xgboost_fold <- xgboost_wf %>% 
   tune_grid(resamples = folds, grid=boost_grid)
 
 head(collect_metrics(xgboost_fold))
 
 ```
+
+We will now select the best model:
+
 ```{r grab_the_best_mod}
 best_model <- xgboost_fold %>% 
   select_best('accuracy')
@@ -372,7 +375,7 @@ The aim here is to check that our `predictions` match up with our `ground truth`
 testing_fit_class <- predict(workflow_xgboost_fit, test)
 testing_fit_probs <- predict(workflow_xgboost_fit, test, type='prob')
 # Bind this on to our test data with the label to compare ground truth vs predicted
-predictions<- cbind(test,testing_fit_probs, testing_fit_class) %>% 
+predictions<- cbind(test,testing_fit_probs, testing_fit_class) %>%
   dplyr::mutate(xgboost_model_pred=.pred_class,
                 xgboost_model_prob=.pred_sick) %>% 
   dplyr::select(everything(), -c(.pred_class, .pred_negative)) %>% 
@@ -420,15 +423,23 @@ First, I will evaluate my baseline model using the package:
 cm_lr <- ConfusionTableR::binary_class_cm(
   #Here you will have to cast to factor type as the tool expects factors
   train_labels = as.factor(predictions$log_reg_class_custom),
-  truth_labels = as.factor(predictions$ThryroidClass)
+  truth_labels = as.factor(predictions$ThryroidClass),
+  positive='sick', mode='everything'
   )
 
 # View the confusion matrix native
-
-
+cm_lr$confusion_matrix
 
 ```
+The baseline model performs pretty well. You can see this is the result of fixing our imbalance. Let's work with it in a row wise fashion, as we can extract some metrics we my be interested in:
 
+```{r extract_eval_data}
+tibble(
+  Precision=cm_lr$record_level_cm$Precision,
+  Recall=cm_lr$record_level_cm$Recall
+)
+
+```
 
 
 
