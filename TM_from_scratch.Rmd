@@ -4,8 +4,8 @@ author: "Gary Hutson - Head of Machine Learning"
 
 output:
   html_document:
-    theme: paper
-    highlight: textmate
+    theme: lumen
+    highlight: tango
     toc: true
     number_sections: true
     toc_float:
@@ -363,7 +363,7 @@ workflow_xgboost_fit <- final_xgboost_fit %>%
 
 As we are following on from the xgboost model building, we will evaluate this first and then compare to our baseline model:
 
-### Use fitted model to predict on testing set
+### Use fitted XGBoost model to predict on testing set
 
 The aim here is to check that our `predictions` match up with our `ground truth` labels. The class labels will be determined by probabilities that are higher than 0.5, however we are going to tweak this threshold to only allow a label if the probability is greater than 0.7:
 
@@ -372,15 +372,62 @@ The aim here is to check that our `predictions` match up with our `ground truth`
 testing_fit_class <- predict(workflow_xgboost_fit, test)
 testing_fit_probs <- predict(workflow_xgboost_fit, test, type='prob')
 # Bind this on to our test data with the label to compare ground truth vs predicted
-predictions<- cbind(test, testing_fit, testing_fit_probs) %>% 
-  dplyr::mutate(xgboost_model_pred=.pred_class, ) %>% 
-  dplyr::select(everything(), -.pred_class)
+predictions<- cbind(test,testing_fit_probs, testing_fit_class) %>% 
+  dplyr::mutate(xgboost_model_pred=.pred_class,
+                xgboost_model_prob=.pred_sick) %>% 
+  dplyr::select(everything(), -c(.pred_class, .pred_negative)) %>% 
+  dplyr::mutate(xgboost_class_custom = ifelse(xgboost_model_prob >0.7,"sick","negative")) %>% 
+  dplyr::select(-.pred_sick)
 
 ```
 
 
+### Use fitted logistic regression model to predict on test set
+
+We are going to now append our predictions from our model we created as a baseline to append to the predictions we already have in the `predictions` data frame:
+
+```{r lr_model_fit}
+testing_lr_fit_probs <- predict(lr_fit, test, type='prob')
+testing_lr_fit_class <- predict(lr_fit, test)
+
+predictions<- cbind(predictions, testing_lr_fit_probs, testing_lr_fit_class)
+
+predictions <- predictions %>% 
+  dplyr::mutate(log_reg_model_pred=.pred_class,
+                log_reg_model_prob=.pred_sick) %>% 
+  dplyr::select(everything(), -c(.pred_class, .pred_negative)) %>% 
+  dplyr::mutate(log_reg_class_custom = ifelse(xgboost_model_prob >0.7,"sick","negative")) %>% 
+  dplyr::select(-.pred_sick)
 
 
+# Get a head view of the finalised data
+head(predictions)
+
+```
+
+### Evaluating the models with the ConfusionTableR package
+
+The default `caret` confusion_matrix function saves everything as a string and doesn't allow you to work with the values from the output. 
+
+This is the problem the ConfusionTableR package solves and means that you can easily store down the variables into a textual output, as and when needed. 
+
+
+#### Evaluate Logistic Regression baseline
+
+First, I will evaluate my baseline model using the package:
+
+```{r baseline_mod_eval}
+cm_lr <- ConfusionTableR::binary_class_cm(
+  #Here you will have to cast to factor type as the tool expects factors
+  train_labels = as.factor(predictions$log_reg_class_custom),
+  truth_labels = as.factor(predictions$ThryroidClass)
+  )
+
+# View the confusion matrix native
+
+
+
+```
 
 
 
