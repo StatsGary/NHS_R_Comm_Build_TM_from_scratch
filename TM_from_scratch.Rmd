@@ -24,11 +24,11 @@ library(ConfusionTableR)
 library(tidymodels)
 library(dplyr)
 library(ggplot2)
-library(stacks)
 library(skimr)
 library(purrr)
 library(ggthemes)
 library(modeldata)
+library(vetiver)
 
 ```
 
@@ -280,7 +280,7 @@ Here, as stated, I will do an iterative search for the best parameters to pass t
 ```{r hp_search}
 # Set the selected parameters in the grid
 boost_grid <- dials::grid_regular(
-  trees(), tree_depth(), levels=3 #Number of combinations to try
+  trees(), tree_depth(), levels=5 #Number of combinations to try
 )
 # Create the resampling method i.e. K Fold Cross Validation
 folds <- vfold_cv(train, k=5)
@@ -345,6 +345,7 @@ final_xgboost_fit <-
   final_wf %>% 
   last_fit(td_split)
 
+
 ```
 
 ### Collect metrics for evaluation 
@@ -360,8 +361,14 @@ final_xgboost_fit %>%
 Next we will look at the workflow fit:
 
 ```{r workflow_fit}
+
+# This extracts the workflow fit
 workflow_xgboost_fit <- final_xgboost_fit %>% 
   extract_workflow()
+
+# This extracts the parsnip model
+xgboost_model_fit <- final_xgboost_fit %>% 
+  extract_fit_parsnip()
 ```
 ## Model evaluation
 
@@ -400,7 +407,7 @@ predictions <- predictions %>%
   dplyr::mutate(log_reg_model_pred=.pred_class,
                 log_reg_model_prob=.pred_sick) %>% 
   dplyr::select(everything(), -c(.pred_class, .pred_negative)) %>% 
-  dplyr::mutate(log_reg_class_custom = ifelse(xgboost_model_prob >0.7,"sick","negative")) %>% 
+  dplyr::mutate(log_reg_class_custom = ifelse(log_reg_model_prob >0.7,"sick","negative")) %>% 
   dplyr::select(-.pred_sick)
 
 
@@ -481,3 +488,55 @@ accuracy_frame <- rbind(accuracy_frame, accuracy_frame_xg)
 rm(accuracy_frame_xg)
 
 ```
+
+Comparing the two confusion matrices we have two different models, in reality we would test multiple models, with multiple hyperparameters and multiple splits. 
+
+That is an example of how to rebalance and improve on the baseline model. Now I will take the fit from our test model and deploy with a new R MLOps package called `vetiver`.
+
+## MLOps with Vetiver
+
+The steps to deploy a model with vetiver is to:
+1. Version 
+2. Deploy
+3. Monitor
+
+The subsections hereunder will show you how to do this.
+
+### Versioning with Vetiver
+
+I will demonstrate how to deploy our original baseline model. At the moment vetiver serialisation of the model is not supported. The TidyModels team are addressing this and will update their GitHub ticket.
+
+Initialising our vetiver model object:
+
+```{r init_vetiver}
+vet_lr_mod <- vetiver_model(lr_fit, "logistic_regression_model")
+
+```
+
+The next phase is to store and version our model, so if it is retrained, the version can be extracted to roll back to previous model serialisations:
+
+```{r versioning}
+library(pins)
+model_board <- board_temp(versioned = TRUE)
+model_board %>% vetiver::vetiver_pin_write(vet_lr_mod)
+model_board %>% pin_versions("logistic_regression_model")
+```
+
+### Deploying with vetiver
+
+We will create a restful API for our deployment of our logistic regression baseline model with `vetiver`.
+
+#### Create a REST API
+
+We will use Plumber here, as this allows for quickly deploying web services. See my tutorial on creating a REST API from scratch with Plumber: https://github.com/StatsGary/NHS_R_Community_Intro_to_Docker.
+
+```{r plumberise}
+#https://vetiver.rstudio.com/get-started/deploy.html
+library(plumber)
+pr() %>% 
+  vetiver_api(vet_lr_mod) %>% 
+  pr_run(port = 8089)
+```
+The next step would be to generate some deployment docs. This can be done easily with vetiver.
+
+
