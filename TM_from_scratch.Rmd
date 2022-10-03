@@ -534,9 +534,17 @@ We will use Plumber here, as this allows for quickly deploying web services. See
 #https://vetiver.rstudio.com/get-started/deploy.html
 library(plumber)
 pr() %>% 
-  vetiver_api(vet_lr_mod) %>% 
-  pr_run(port = 8089)
+  vetiver_api(vet_lr_mod)
+
+# Write the plumber file
+vetiver_write_plumber(model_board, 'logistic_regression_model')
 ```
 The next step would be to generate some deployment docs. This can be done easily with vetiver.
 
+### Generate Docker file with Vetiver
 
+To generate your docker files, you can use the below command to generate the doc for container deployment in a Docker miroservice:
+
+```{r dockerfile}
+vetiver_write_docker(vet_lr_mod)
+```
