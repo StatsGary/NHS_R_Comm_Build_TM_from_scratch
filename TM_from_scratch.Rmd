@@ -131,7 +131,7 @@ Okay, we have the training and testing sample. This sample will be used to asses
 
 ## Making the first recipe
 
-
+<img src="man/fig/logo_recipes.png" width="200" height="300" align="left">
 
 Recipes are a way to simplify the feature engineering process. Back in the old days you had to do each of these steps to the training data prior to fitting a model, especially using package such as `caret`. Now, you can speed this process up massively with the help of the recipes package. Let's whip up the first recipe:
 
@@ -441,7 +441,7 @@ cm_lr$confusion_matrix
 ```
 The baseline model performs pretty well. You can see this is the result of fixing our imbalance. Let's work with it in a row wise fashion, as we can extract some metrics we my be interested in:
 
-```{r extract_eval_data}
+```{r extract_eval_data_lr}
 # Get record level confusion matrix for logistic regression model
 cm_rl_log_reg <- cm_lr$record_level_cm
 accuracy_frame <- tibble(
@@ -457,7 +457,7 @@ accuracy_frame <- tibble(
 
 The next stage is to evaluate the XGBoost baseline. We will use this final evaluation to compare with our baseline model. `Note: in reality this would be compared across many models`:
 
-```{r evaluate_xgboost}
+```{r evaluate_xgboost_cm}
 cm_xgb <- ConfusionTableR::binary_class_cm(
   #Here you will have to cast to factor type as the tool expects factors
   train_labels = as.factor(predictions$xgboost_class_custom),
