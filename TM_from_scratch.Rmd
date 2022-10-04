@@ -556,7 +556,7 @@ vetiver_write_plumber(model_board, 'logistic_regression_model')
 
 To simply deploy a vetiver endpoint to R Studio connect, follow this command below:
 
-```{r deploy_to_rs_cloud}
+```{r deploy_to_rs_cloud, eval=FALSE}
 vetiver_deploy_rsconnect(model_board, "logistic_regression_model")
 ```
 
@@ -574,7 +574,7 @@ vetiver_write_docker(vet_lr_mod)
 
 The first thing to do is set up your endpoint: 
 
-```{r endpoint}
+```{r endpoint, eval=FALSE}
 endpoint <- vetiver_endpoint("http://127.0.0.1:8080/predict")
 print(endpoint)
 ```
@@ -585,7 +585,7 @@ Here the port number (8080) must match that of the port stated. In my case port 
 
 Here, we will set up our data to make our fields in our training set:
 
-```{r test_endpoint_with_prod}
+```{r test_endpoint_with_prod, eval=FALSE}
 # Get the structure of train 
 str(train)
 names(train)
@@ -615,9 +615,8 @@ prod_patient <- tibble(
 
 The step after this would be to predict against our endpoint a new patient:
 
-```{r new_patient}
+```{r new_patient, eval=FALSE}
 predict(endpoint, prod_patient)
 ```
-
 
 
