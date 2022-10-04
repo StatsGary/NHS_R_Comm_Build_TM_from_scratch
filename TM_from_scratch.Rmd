@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r packages, echo=TRUE, include=FALSE}
+```{r packages, echo=FALSE, include=TRUE}
 library(MLDataR)
 library(ConfusionTableR)
 library(tidymodels)
@@ -42,14 +42,13 @@ The dataset for the example will be the Thyroid dataset contained in the `MLData
 
 ```{r dataset_include}
 td <- MLDataR::thyroid_disease
-td <- td %>% 
-  dplyr::filter(patient_age <400)
+td <- td 
 skim(td)
 ```
 
 ## Clean imports
 
-We will remove the null values for now, but you could impute these with methods such as MICE or mean/mode/median imputation methods, see:.
+We will remove the null values for now, but you could impute these with methods such as [MICE](https://scikit-learn.org/stable/modules/impute.html) or mean/mode/median imputation methods.
 
 ```{r clean_data}
 td_clean <- td[complete.cases(td),]
@@ -71,12 +70,11 @@ We will do some over sampling on the sick cases later on in this tutorial, howev
 Smote is the algorithm we will use for dealing with imbalance:
 
 ![](man/fig/test_smote.png)
-
+This method is used to obtain a synthetically class-balanced or nearly class-balanced training set, which is then used to train the classifier. 
 
 # Explaratory Data Analysis (EDA)
-<!--https://www.kaggle.com/code/statsgary/thyroid-disease-eda-classification-and-ensembling/edit-->
 
-We will create a function to look at the distribution of the data:
+The EDA component we will build sources an external function from the functions sub folder in our project structure. This function builds the `histoplotter` function to 
 
 ```{r distribution_function}
 # Get continuous variables only
