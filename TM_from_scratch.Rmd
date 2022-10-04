@@ -74,7 +74,7 @@ This method is used to obtain a synthetically class-balanced or nearly class-bal
 
 # Explaratory Data Analysis (EDA)
 
-The EDA component we will build sources an external function from the functions sub folder in our project structure. This function builds the `histoplotter` function to 
+The EDA component we will build sources an external function from the functions sub folder in our project structure. This function builds the `histoplotter` function to enable the visualisation of our continuous variables. 
 
 ```{r distribution_function}
 # Get continuous variables only
@@ -130,6 +130,8 @@ test <- testing(td_split)
 Okay, we have the training and testing sample. This sample will be used to assess how accurate the model is on the held out testing set. This will link to the evaluate metrics for the model. We will delve into that later on in this training.
 
 ## Making the first recipe
+
+
 
 Recipes are a way to simplify the feature engineering process. Back in the old days you had to do each of these steps to the training data prior to fitting a model, especially using package such as `caret`. Now, you can speed this process up massively with the help of the recipes package. Let's whip up the first recipe:
 
