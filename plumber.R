@@ -23,8 +23,8 @@ if (FALSE) {
     library(workflows)
     library(yardstick)
 }
-b <- board_folder(path = "/var/folders/dj/kl17vwmx4qd13l4byj3kbmd80000gq/T/RtmpQKyTIZ/pins-149e15595a856")
-v <- vetiver_pin_read(b, "logistic_regression_model", version = "20221003T153705Z-1b676")
+b <- board_folder(path = "/var/folders/dj/kl17vwmx4qd13l4byj3kbmd80000gq/T/Rtmpu7qs5y/pins-70df52be8269")
+v <- vetiver_pin_read(b, "logistic_regression_model", version = "20221004T143016Z-1e193")
 
 #* @plumber
 function(pr) {

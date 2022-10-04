@@ -15,10 +15,6 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-```
-
-
-```{r packages, echo=FALSE, include=TRUE}
 library(MLDataR)
 library(ConfusionTableR)
 library(tidymodels)
@@ -29,8 +25,10 @@ library(purrr)
 library(ggthemes)
 library(modeldata)
 library(vetiver)
-
 ```
+
+<img src="man/fig/TidyModelsBanner.png" width="200" height="300" align="right">
+
 
 # Data preparation 
 
@@ -38,11 +36,12 @@ The following steps will show you the steps to prepare the data.
 
 ## Load in the dataaset and view statistics
 
+<img src="man/fig/mldataR_logo.png" width = "150px" height = "150px">
+
 The dataset for the example will be the Thyroid dataset contained in the `MLDataR` package.
 
 ```{r dataset_include}
 td <- MLDataR::thyroid_disease
-td <- td 
 skim(td)
 ```
 
@@ -108,6 +107,8 @@ The next set of steps will be used to get the data ready for the training of the
 
 ## Dividing the data into train/val/test samples
 
+<img src="man/fig/logo_resample.png" width = "150px" height = "150px">
+
 Now we will divide the data into training, validation and test samples:
 
 ```{r divide_and_conquer}
@@ -129,11 +130,11 @@ test <- testing(td_split)
 
 Okay, we have the training and testing sample. This sample will be used to assess how accurate the model is on the held out testing set. This will link to the evaluate metrics for the model. We will delve into that later on in this training.
 
-## Making the first recipe
+## Getting our model ingredients ready with Recipes
 
-<img src="man/fig/logo_recipes.png" width="200" height="300" align="left">
+<img src="man/fig/logo_recipes.png" width = "150px" height = "150px">
 
-Recipes are a way to simplify the feature engineering process. Back in the old days you had to do each of these steps to the training data prior to fitting a model, especially using package such as `caret`. Now, you can speed this process up massively with the help of the recipes package. Let's whip up the first recipe:
+Recipes is a way to simplify the feature engineering process. Back in the old days you had to do each of these steps to the training data prior to fitting a model, especially using package such as `caret`. Now, you can speed this process up massively with the help of the recipes package. Let's whip up the  recipe:
 
 ```{r training_recipe}
 
@@ -154,6 +155,7 @@ training_df <- train_rcp %>%
 # Class imbalance resolved
 class_imbalance_after_smote <- unclass(prop.table(table(training_df$ThryroidClass)))[1:2]
 
+print(class_imbalance_after_smote)
 
 ```
 
@@ -170,8 +172,9 @@ This technique is not always successful, due to the severity of the imbalance, t
 
 # Model training 
 
-In this example I will create a baseline model and compare against one further classifier, for the sake of brevity. However, in ML challenges it is common to try many different classifiers and pit them against each other in the evaluation stages. 
+<img src="man/fig/parsnip_logo.png" width = "150px" height = "150px">
 
+In this example I will create a baseline model and compare against one further classifier, for the sake of brevity. However, in ML challenges it is common to try many different classifiers and pit them against each other in the evaluation stages. 
 
 ## Training the Logistic Regression baseline model
 
@@ -190,6 +193,8 @@ print(lr_mod)
 ```
 
 ### Creating the model workflow
+
+<img src="man/fig/logo_workflows.png" width = "150px" height = "150px">
 
 We will use workflows to create the model workflow:
 
@@ -257,13 +262,15 @@ There are many ways to improve model performance, but the three main ways are:
 2. Bagging 
 3. Stacking 
 
-There are specific R packages for two of these - for bagging see baguette and for stacking see stacks.
+There are specific R packages for two of these - for bagging see baguette and for stacking see stacks. Otherwise, these can be implemented in caret by extracting the fit objects from the workflow. 
 
 ### Set up model
 
 Firstly, we are going to repeat the same process as above and then we are going to compare the results that we get from both models to make a decision about which one to push into production. 
 
-This time I will hyperparameter tune the number of trees to grow and the depth of the leafs of the tree. For details of the maths underpinning this model, check out Josh Stamar's excellent videos: https://www.youtube.com/watch?v=ZVFeW798-2I.
+This time I will hyperparameter tune the number of trees to grow and the depth of the leafs of the tree. 
+
+For details of the maths underpinning this model, check out Josh Stamar's excellent videos: https://www.youtube.com/watch?v=ZVFeW798-2I.
 
 ```{r setup_xgboost}
 
@@ -274,6 +281,8 @@ xgboost_mod <- boost_tree(trees=tune(), tree_depth = tune()) %>%
 ```
 
 ### Hyperparameter tuning and K-Fold Cross Validation
+
+<img src="man/fig/logo_dials.png" width = "150px" height = "150px">
 
 Here, as stated, I will do an iterative search for the best parameters to pass to my model:
 
@@ -288,7 +297,7 @@ folds <- vfold_cv(train, k=5)
 ```
 
 
-## Create XGBoost workflow
+### Create XGBoost workflow
 
 I will now implement the workflow to manage the XGBoost model:
 
@@ -370,11 +379,11 @@ workflow_xgboost_fit <- final_xgboost_fit %>%
 xgboost_model_fit <- final_xgboost_fit %>% 
   extract_fit_parsnip()
 ```
-## Model evaluation
+# Model evaluation
 
 As we are following on from the xgboost model building, we will evaluate this first and then compare to our baseline model:
 
-### Use fitted XGBoost model to predict on testing set
+## Use fitted XGBoost model to predict on testing set
 
 The aim here is to check that our `predictions` match up with our `ground truth` labels. The class labels will be determined by probabilities that are higher than 0.5, however we are going to tweak this threshold to only allow a label if the probability is greater than 0.7:
 
@@ -393,7 +402,7 @@ predictions<- cbind(test,testing_fit_probs, testing_fit_class) %>%
 ```
 
 
-### Use fitted logistic regression model to predict on test set
+## Use fitted logistic regression model to predict on test set
 
 We are going to now append our predictions from our model we created as a baseline to append to the predictions we already have in the `predictions` data frame:
 
@@ -416,14 +425,15 @@ head(predictions)
 
 ```
 
-### Evaluating the models with the ConfusionTableR package
+# Evaluating the models with the ConfusionTableR package
+
+<img src="man/fig/ConfusionTableR.png" width = "150px" height = "150px">
 
 The default `caret` confusion_matrix function saves everything as a string and doesn't allow you to work with the values from the output. 
 
 This is the problem the ConfusionTableR package solves and means that you can easily store down the variables into a textual output, as and when needed. 
 
-
-#### Evaluate Logistic Regression baseline
+## Evaluate Logistic Regression baseline
 
 First, I will evaluate my baseline model using the package:
 
@@ -453,7 +463,7 @@ accuracy_frame <- tibble(
 
 ```
 
-#### Evaluate XGBoost Model 
+## Evaluate XGBoost Model 
 
 The next stage is to evaluate the XGBoost baseline. We will use this final evaluation to compare with our baseline model. `Note: in reality this would be compared across many models`:
 
@@ -493,7 +503,9 @@ Comparing the two confusion matrices we have two different models, in reality we
 
 That is an example of how to rebalance and improve on the baseline model. Now I will take the fit from our test model and deploy with a new R MLOps package called `vetiver`.
 
-## MLOps with Vetiver
+# MLOps- putting model into production with Vetiver
+
+<img src="man/fig/logo_vetiver.png" width = "150px" height = "150px">
 
 The steps to deploy a model with vetiver is to:
 1. Version 
@@ -502,7 +514,7 @@ The steps to deploy a model with vetiver is to:
 
 The subsections hereunder will show you how to do this.
 
-### Versioning with Vetiver
+## Versioning with Vetiver
 
 I will demonstrate how to deploy our original baseline model. At the moment vetiver serialisation of the model is not supported. The TidyModels team are addressing this and will update their GitHub ticket.
 
@@ -522,11 +534,11 @@ model_board %>% vetiver::vetiver_pin_write(vet_lr_mod)
 model_board %>% pin_versions("logistic_regression_model")
 ```
 
-### Deploying with vetiver
+## Deploying with vetiver
 
 We will create a restful API for our deployment of our logistic regression baseline model with `vetiver`.
 
-#### Create a REST API
+### Create a REST API
 
 We will use Plumber here, as this allows for quickly deploying web services. See my tutorial on creating a REST API from scratch with Plumber: https://github.com/StatsGary/NHS_R_Community_Intro_to_Docker.
 
@@ -539,12 +551,73 @@ pr() %>%
 # Write the plumber file
 vetiver_write_plumber(model_board, 'logistic_regression_model')
 ```
-The next step would be to generate some deployment docs. This can be done easily with vetiver.
+
+### Making deployment easy with RStudio Connect
+
+To simply deploy a vetiver endpoint to R Studio connect, follow this command below:
+
+```{r deploy_to_rs_cloud}
+vetiver_deploy_rsconnect(model_board, "logistic_regression_model")
+```
+
+If you are deploying to any other platform i.e. GCP, AWS, Cloud Run or MS Azure,  you would need to create a microservice and store it in the container registry of the relevant cloud provider. I go into how to deploy your app as an endpoint on Docker here: https://www.youtube.com/watch?v=WMCkV_J5a0s.
 
 ### Generate Docker file with Vetiver
 
-To generate your docker files, you can use the below command to generate the doc for container deployment in a Docker miroservice:
+To generate your docker files, you can use the below command to generate the doc for container deployment in a [Docker miroservice](https://www.youtube.com/watch?v=WMCkV_J5a0s):
 
 ```{r dockerfile}
 vetiver_write_docker(vet_lr_mod)
 ```
+
+### Make a prediction with Vetiver endpoint
+
+The first thing to do is set up your endpoint: 
+
+```{r endpoint}
+endpoint <- vetiver_endpoint("http://127.0.0.1:8080/predict")
+print(endpoint)
+```
+
+Here the port number (8080) must match that of the port stated. In my case port 8080 is open on my API to connect to and the predict function will allow you to pass requests to and from the endpoint. 
+
+#### Set up production data to test endpoint
+
+Here, we will set up our data to make our fields in our training set:
+
+```{r test_endpoint_with_prod}
+# Get the structure of train 
+str(train)
+names(train)
+
+# New patient
+prod_patient <- tibble(
+  patient_age = 40, patient_gender = 1,
+  presc_thyroxine = 0, queried_why_on_thyroxine = 0,
+  presc_anthyroid_meds = 1, sick = 0, 
+  pregnant = 1, thyroid_surgery = 1, 
+  radioactive_iodine_therapyI131 = 0, query_hypothyroid  = 0, 
+  query_hyperthyroid  = 1, lithium = 0, goitre = 0, tumor = 0, 
+  hypopituitarism = 0, psych_condition = 0, TSH_measured = 1,
+  TSH_reading = 2.0, T3_measured = 1, T3_reading = 2.2,
+  T4_measured = 1, T4_reading = 85, thyrox_util_rate_T4U_measured = 1,
+  thyrox_util_rate_T4U_reading = 0.93, FTI_measured = 1, 
+  FTI_reading = 109, 
+  # Because we used dummy variables these need to be included
+  ref_src_STMW = 0, ref_src_SVHC = 0, ref_src_SVHD = 0, 
+  ref_src_SVI = 1
+
+  
+  
+)
+
+```
+
+The step after this would be to predict against our endpoint a new patient:
+
+```{r new_patient}
+predict(endpoint, prod_patient)
+```
+
+
+
