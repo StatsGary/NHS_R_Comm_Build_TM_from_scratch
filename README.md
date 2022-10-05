@@ -1,12 +1,12 @@
 # NHS R Community - Build a TidyModels Classification Model from Scratch
 
-<p><a href="https://hutsons-hacks.info/"><img src = "man/fig/NHSR.png" width = "200px" height="250px"></a></p>
+<a href="https://hutsons-hacks.info/"><img src = "man/fig/NHSR.png" width = "200px" height="250px"></a>
 
 ## Contents
 
 In this workshop you will learn how to:
 
-- Load in data from the MLDataR library
+- Load in data from the [MLDataR](https://cran.r-project.org/web/packages/MLDataR/vignettes/MLDataR.html) library
 - Explaratory data analysis
 - Create a recipe for model training 
 - Build a baseline regression model and then compare to a cutting edge algorithm (XGBoost)
