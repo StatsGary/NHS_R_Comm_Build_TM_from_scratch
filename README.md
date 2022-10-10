@@ -10,6 +10,7 @@ In this workshop you will learn how to:
 - Explaratory data analysis
 - Create a [recipe](https://recipes.tidymodels.org/) for model training 
 - Build a [Parsnip](https://www.tidyverse.org/blog/2018/11/parsnip-0-0-1/) baseline regression model and then compare to a cutting edge algorithm (XGBoost)
+- Hyperparameter tune with [dials](https://dials.tidymodels.org/) and fit seperate models
 - Evaluate your model with [ConfusionTableR](https://cran.r-project.org/web/packages/ConfusionTableR/vignettes/ConfusionTableR.html)
 - Visualise and save your model results
 - Serialise model
