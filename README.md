@@ -15,6 +15,6 @@ In this workshop you will learn how to:
 - Visualise and save your model results
 - Serialise model
 - Build inference script to pass production data through model
-- Deploy your model with [Vetiver](https://vetiver.rstudio.com/) (a new package for MLOps)
+- Deploy your model with [Vetiver](https://vetiver.rstudio.com/) (a new package for MLOps) which creates a [Plumber API](https://www.rplumber.io/) and docs for deploying to other services, such as a Dockerfile
 
 
