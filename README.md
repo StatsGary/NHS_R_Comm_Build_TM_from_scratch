@@ -29,4 +29,4 @@ In this workshop you will learn how to:
 - Deploying Plumber web service as a Docker microservice: https://youtu.be/JK6VLAKRjO4
 - Advanced Modelling with Caret in R: https://www.youtube.com/watch?v=9uLiSTc-MUs
 - Introduction to Docker and R: https://github.com/StatsGary/NHS_R_Community_Intro_to_Docker
-- 
+- [Assessing classification model with ConfusionTableR and outputting matrix to database](https://www.youtube.com/watch?v=9zcUlgLySZo&list=PL37zlCA8GQdo-mObS7U6ViJduy9CyC5aI&index=15&t=322s) - this will show you how to use the Confusion Matrix object of R and then beable to store the results into a database with ConfusionTableR. 
