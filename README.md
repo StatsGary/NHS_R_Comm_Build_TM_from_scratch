@@ -18,3 +18,6 @@ In this workshop you will learn how to:
 - Deploy your model with [Vetiver](https://vetiver.rstudio.com/) (a new package for MLOps) which creates a [Plumber API](https://www.rplumber.io/) and docs for deploying to other services, such as a Dockerfile
 
 
+## Additional resources
+
+- Building a 
