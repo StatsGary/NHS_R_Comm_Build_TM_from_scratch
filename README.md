@@ -20,4 +20,9 @@ In this workshop you will learn how to:
 
 ## Additional resources
 
-- Building a classification model from scratch and deploying with Plumber: 
+- Building a classification model from scratch and deploying with Plumber: https://youtu.be/PtD5hgHM-DY
+- TidyModels webinar on building TidyModels models: https://www.youtube.com/watch?v=hxRx7ozLNKw
+- Deploying Plumber web service as a Docker microservice: https://youtu.be/JK6VLAKRjO4
+- Advanced Modelling with Caret in R: https://www.youtube.com/watch?v=9uLiSTc-MUs
+- Introduction to Docker and R: https://github.com/StatsGary/NHS_R_Community_Intro_to_Docker
+- 
