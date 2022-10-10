@@ -2,6 +2,11 @@
 
 <a href="https://hutsons-hacks.info/"><img src = "man/fig/tm_nhsr.png"></a>
 
+<img src ="man/figures/PyHacks.jpg"> <!-- width="300" height="150">-->
+ <!-- badges: start -->
+  [![TidyModelsTutorial: Active](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+<!-- badges: end -->
+
 ## Contents
 
 In this workshop you will learn how to:
