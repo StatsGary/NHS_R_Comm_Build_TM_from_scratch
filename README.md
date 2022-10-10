@@ -1,6 +1,5 @@
 # NHS R Community - Build a TidyModels Classification Model from Scratch
 
-<a href="https://hutsons-hacks.info/"><img src = "man/fig/tm_nhsr.png"></a>
 <a href="https://hutsons-hacks.info/"><img src = "man/fig/TidyModels.gif"></a>
 
  <!-- badges: start -->
