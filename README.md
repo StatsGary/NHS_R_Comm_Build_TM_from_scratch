@@ -8,7 +8,7 @@ In this workshop you will learn how to:
 
 - Load in data from the [MLDataR](https://cran.r-project.org/web/packages/MLDataR/vignettes/MLDataR.html) library
 - Explaratory data analysis
-- Create a recipe for model training 
+- Create a [recipe](https://recipes.tidymodels.org/) for model training 
 - Build a baseline regression model and then compare to a cutting edge algorithm (XGBoost)
 - Evaluate your model with [ConfusionTableR](https://cran.r-project.org/web/packages/ConfusionTableR/vignettes/ConfusionTableR.html)
 - Visualise and save your model results
