@@ -20,4 +20,4 @@ In this workshop you will learn how to:
 
 ## Additional resources
 
-- Building a 
+- Building a classification model from scratch and deploying with Plumber: 
